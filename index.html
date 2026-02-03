@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Player - Tu Compañero Digital de Bingo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container landing-page">
+        <section class="hero-section">
+            <img class="hero-logo" src="https://bingoplayer.lui2mi.com/assets/logo-banner.png"/>
+            <p class="hero-subtitle">Transforma la forma en que disfrutas del bingo presencial. Olvídate de los cartones desordenados y los marcadores perdidos; nuestra aplicación te permite digitalizar tus cartones de bingo físicos de manera sencilla.</p>
+            <button class="cta-button" id="downloadAppButton">¡Descarga Ahora!</button>
+        </section>
+        <h2 class="section-title">¿Cómo Funciona?</h2>
+        <section class="features-section">
+            <div class="feature-item">
+                <i class="fas fa-camera feature-icon"></i>
+                <h3 class="feature-heading">Escanea tus Cartones</h3>
+                <p>Simplemente usa la cámara de tu dispositivo para escanear tus cartones impresos. Una vez que los tienes en la app, solo necesitas ingresar los números a medida que van saliendo del bombo.</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-magic feature-icon"></i>
+                <h3 class="feature-heading">Marcado Automático</h3>
+                <p>Bingo Player se encarga de marcar automáticamente esos números en todos tus cartones escaneados.</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-bell feature-icon"></i>
+                <h3 class="feature-heading">Notificaciones Instantáneas</h3>
+                <p>La app está diseñada para hacerte la vida más fácil: te notifica al instante cuando completas una línea o, lo más emocionante, ¡cuando tienes un BINGO! Además, es compatible con los tipos de juego más comunes.</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-home feature-icon"></i>
+                <h3 class="feature-heading">Perfecto para Cualquier Partida</h3>
+                <p>Bingo Player es tu compañero digital perfecto para cualquier partida de bingo en casa, en un evento comunitario o con amigos. Es una herramienta que te ayuda a jugar de forma más inteligente y sin errores, asegurando que no te pierdas ninguna oportunidad de ganar.</p>
+            </div>
+        </section>
+
+        <section class="screenshots-section">
+            <h2 class="section-title">Capturas de la Aplicación</h2>
+            <div class="screenshot-grid">
+                <div class="screenshot-placeholder">
+                    <img src="https://bingoplayer.lui2mi.com/assets/capture1.png" alt="Captura de Pantalla 1" class="app-screenshot">
+                </div>
+                <div class="screenshot-placeholder">
+                    <img src="https://bingoplayer.lui2mi.com/assets/capture2.png" alt="Captura de Pantalla 2" class="app-screenshot">
+                </div>
+                <div class="screenshot-placeholder">
+                    <img src="https://bingoplayer.lui2mi.com/assets/capture5.png" alt="Captura de Pantalla 3" class="app-screenshot">
+                </div>
+            </div>
+            
+        </section>
+
+        <section class="contact-section">
+            <h2 class="section-title">Contáctanos</h2>
+            <form class="contact-form">
+                <div class="input-group">
+                    <label for="contactName" class="input-label">Nombre</label>
+                    <input type="text" id="contactName" class="styled-input" placeholder="Tu nombre">
+                </div>
+                <div class="input-group">
+                    <label for="contactEmail" class="input-label">Correo Electrónico</label>
+                    <input type="email" id="contactEmail" class="styled-input" placeholder="tu@ejemplo.com">
+                </div>
+                <div class="input-group">
+                    <label for="contactMessage" class="input-label">Mensaje</label>
+                    <textarea id="contactMessage" class="styled-textarea" placeholder="Escribe tu mensaje aquí..."></textarea>
+                </div>
+                <button type="submit" class="cta-button send-button">Enviar Mensaje</button>
+            </form>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; <span id="currentYear"></span> lui2mi. Todos los derechos reservados.</p>
+            <nav class="footer-nav">
+                <a href="https://bingoplayer.lui2mi.com/assets/politica_de_privacidad.pdf" class="footer-link">Políticas de Privacidad</a>
+                <a href="mailto:bingoplayer@lui2mi.com" class="footer-link">bingoplayer@lui2mi.com</a>
+            </nav>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // New JavaScript for app store redirection
+        document.getElementById('downloadAppButton').addEventListener('click', function() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+            // Define your App Store and Play Store URLs
+            // IMPORTANT: Replace these with your actual app URLs when available!
+            var iOS_App_Store_URL = 'https://apps.apple.com/co/app/bingo-player/id6746467242';
+            var Android_Play_Store_URL = 'https://play.google.com/store/apps/details?id=com.lui2mi.bingoplayer';
+
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                // iOS device
+                window.location.href = iOS_App_Store_URL;
+            } else if (/android/i.test(userAgent)) {
+                // Android device
+                window.location.href = Android_Play_Store_URL;
+            } else {
+                // Not a mobile device or neither iOS nor Android
+                // You could open both in new tabs, or redirect to a page with both links.
+                // For simplicity, let's just open Play Store as a default, or a generic download page.
+                alert('Detectamos que no estás en un dispositivo móvil. Serás redirigido a la Play Store. Si usas iOS, por favor abre la página desde tu iPhone/iPad.');
+                window.location.href = Android_Play_Store_URL; // Or a custom landing page for desktop users
+            }
+        });
+    </script>
+</body>
+</html>
