@@ -6,37 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BingoPlayer - Analytics</title>
     <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/spark-md5.min.js"></script>
 
     <style>
         /* CSS para el Diseño Visual */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
             background-color: #f4f4f9;
             color: #333;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
         }
 
         #container {
-            display: grid;
-            grid-template-areas:
-                "image text"
-                "controls controls";
-            grid-template-rows: 1fr auto;
-            grid-template-columns: 2fr 1fr;
-            /* Imagen más grande que el texto */
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
             background: #fff;
-            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
+        #work-area {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+        }
+
+
+
         #image-area {
-            grid-area: image;
-            height: 76vh;
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -54,14 +56,13 @@
         }
 
         #text-area {
-            grid-area: text;
+            flex: 0.5;
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 6px;
             border: 1px solid #ddd;
             overflow-y: auto;
-            max-height: 400px;
-            /* Limita la altura del texto para mantener el diseño */
+            max-height: 88vh;
         }
 
         #text-content {
@@ -70,18 +71,25 @@
         }
 
         #controls-area {
-            grid-area: controls;
+            flex: 0;
             display: flex;
+            flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            padding-top: 15px;
+            padding: 15px;
             border-top: 1px solid #eee;
+        }
+
+        .controls-section {
+            display: flex;
+            flex: 1;
         }
 
         .controls-group {
             display: flex;
             gap: 10px;
             align-items: center;
+            margin-right: 15px;
         }
 
         button {
@@ -116,37 +124,65 @@
             color: #dc3545;
             text-align: center;
         }
+
+        @media (max-width: 600px) {
+            #work-area {
+                flex-direction: column;
+            }
+
+            #image-area {
+                max-height: 60vh;
+            }
+
+            #text-area {
+                max-height: 25vh;
+            }
+            #controls-area {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div id="container">
+        <div id="work-area">
+            <div id="image-area">
+                <img id="card-image" src="" alt="Imagen de la tarjeta" style="display: none;">
+                <span id="loading-image">Cargando imagen...</span>
+            </div>
 
-        <div id="image-area">
-            <img id="card-image" src="" alt="Imagen de la tarjeta" style="display: none;">
-            <span id="loading-image">Cargando imagen...</span>
+            <div id="text-area">
+                <p id="text-content">Cargando datos...</p>
+            </div>
         </div>
 
-        <div id="text-area">
-            <p id="text-content">Cargando datos...</p>
-        </div>
 
         <div id="controls-area">
-            <div class="controls-group">
-                <button id="prev-btn" disabled>&lt; Anterior</button>
-                <button id="next-btn" disabled>Siguiente &gt;</button>
+            <div class="controls-section">
+                <div class="controls-group">
+                    <button id="prev-btn" disabled>&lt; Anterior</button>
+                    <button id="next-btn" disabled>Siguiente &gt;</button>
+                </div>
+
+                <div class="controls-group">
+                    <input type="number" id="page-input" value="1" min="1">
+                    <span id="page-info">de ?</span>
+                </div>
+            </div>
+            <div class="controls-section">
+                <div class="controls-group">
+                    Ocultos
+                    <input type="checkbox" id="fix-btn">
+                </div>
+                <div class="controls-group">
+                    <button id="send-btn">Arreglar</button>
+                    <button id="delete-btn">Eliminar</button>
+                </div>
             </div>
 
-            <div class="controls-group">
-                <span>Página: </span>
-                <input type="number" id="page-input" value="1" min="1">
-                <span id="page-info">de ?</span>
-            </div>
 
-            <div class="controls-group">
-                <button id="delete-btn">Eliminar</button>
-            </div>
         </div>
     </div>
 
@@ -160,6 +196,7 @@
             const APP_ID = 'bVQYkCblfINWHl9HkaFmV6SEyVpQWdWXhGxiaz2h'; // Reemplaza esto
             const JS_KEY = 'QmI5XDehxfxD9j118mZGH30PO16iXvjgJLAxOgny'; // Reemplaza esto
             const SERVER_URL = 'https://parseapi.back4app.com'; // Reemplaza esto con tu URL base
+            const LS_FIX_KEY = 'fix';
 
             Parse.initialize(APP_ID, JS_KEY);
             Parse.serverURL = SERVER_URL;
@@ -172,6 +209,7 @@
             let totalObjects = 0;
             const limit = 1; // Solo mostramos 1 registro por "página"
             let currentObject = null;
+            const fix = localStorage.getItem(LS_FIX_KEY);
 
 
             // --- 2. MANEJO DE ELEMENTOS DEL DOM ---
@@ -184,8 +222,10 @@
             const textContent = document.getElementById('text-content');
             const statusMessage = document.getElementById('status-message');
             const deleteBtn = document.getElementById('delete-btn');
+            const sendBtn = document.getElementById('send-btn');
+            const fixBtn = document.getElementById('fix-btn');
 
-
+            fixBtn.checked = fix && fix === 'true'
             // --- 3. FUNCIONES DE CONSULTA ---
 
             /**
@@ -194,6 +234,7 @@
             async function fetchTotalCount() {
                 try {
                     const query = new Parse.Query(CardsScan);
+                    query.equalTo('fix', fix && fix === 'true' ? true : undefined)
                     totalObjects = await query.count();
                     pageInfo.textContent = `de ${totalObjects}`;
                     pageInput.max = totalObjects;
@@ -271,6 +312,7 @@
                     const query = new Parse.Query(CardsScan);
                     query.limit(limit);
                     query.skip(skip);
+                    query.equalTo('fix', fix && fix === 'true'?  true : undefined)
                     // Opcional: ordenar por fecha de creación o un campo específico
                     query.ascending("createdAt");
                     const results = await query.find();
@@ -329,25 +371,25 @@
                 pageInput.min = 1;
                 pageInput.max = totalObjects || 1; // Para evitar min/max inválidos si total es 0
             }
-            
+
             async function deleteImage(urlImage) {
                 const publicId = urlImage.split('/').at(-1).split('.')[0];
 
-              const url = `https://bingoplayer.up.railway.app/analytic?id=${publicId}`;
-            
-              fetch(url, {
-                method: 'DELETE'
-              })
-              .then(response => response.json())
-              .then(data => {
-                  console.log(data)
-                if (data.result === 'ok') {
-                  console.log('Imagen eliminada con éxito');
-                } else {
-                  console.error('Error al eliminar la imagen', data);
-                }
-              })
-              .catch(error => console.error('Error en la solicitud:', error));
+                const url = `https://bingoplayer.up.railway.app/analytic?id=${publicId}`;
+
+                fetch(url, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data)
+                        if (data.result === 'ok') {
+                            console.log('Imagen eliminada con éxito');
+                        } else {
+                            console.error('Error al eliminar la imagen', data);
+                        }
+                    })
+                    .catch(error => console.error('Error en la solicitud:', error));
             }
 
             // --- 4. MANEJO DE EVENTOS ---
@@ -389,6 +431,19 @@
                     await currentObject.destroy();
                     location.reload();
                 }
+            })
+
+            sendBtn.addEventListener('click', async () => {
+                if (currentObject) {
+                    currentObject.set('fix', true);
+                    await currentObject.save();
+                    location.reload();
+                }
+            })
+
+            fixBtn.addEventListener('change', async (event)=> {
+                localStorage.setItem(LS_FIX_KEY, event.currentTarget.checked);
+                location.reload();
             })
 
             // Iniciar la aplicación
