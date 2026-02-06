@@ -33,6 +33,7 @@
             flex: 1;
             display: flex;
             flex-direction: row;
+            min-height: 0;
         }
 
 
@@ -50,7 +51,7 @@
 
         #card-image {
             max-width: 100%;
-            height: 76dvh;
+            height: 100%;
             object-fit: contain;
             /* Asegura que la imagen sea visible sin cortarse */
         }
@@ -62,8 +63,6 @@
             border-radius: 6px;
             border: 1px solid #ddd;
             overflow-y: auto;
-            --max-height: 88dvh;
-            min-height: 0;
         }
 
         #text-content {
@@ -129,14 +128,6 @@
         @media (max-width: 600px) {
             #work-area {
                 flex-direction: column;
-            }
-
-            #image-area {
-                max-height: 60dvh;
-            }
-
-            #text-area {
-                max-height: 25dvh;
             }
             #controls-area {
                 flex-direction: column;
