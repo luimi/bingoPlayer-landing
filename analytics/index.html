@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
     <title>BingoPlayer - Analytics</title>
     <script src="https://unpkg.com/parse/dist/parse.min.js"></script>
 
@@ -102,6 +103,14 @@
             transition: background-color 0.3s;
         }
 
+        #delete-btn {
+            background-color: floralwhite;
+        }
+
+        #send-btn {
+            background-color: lightgray;
+        }
+
         button:hover:not(:disabled) {
             background-color: #0056b3;
         }
@@ -129,6 +138,7 @@
             #work-area {
                 flex-direction: column;
             }
+
             #controls-area {
                 flex-direction: column;
             }
@@ -154,8 +164,8 @@
         <div id="controls-area">
             <div class="controls-section">
                 <div class="controls-group">
-                    <button id="prev-btn" disabled>&lt; Anterior</button>
-                    <button id="next-btn" disabled>Siguiente &gt;</button>
+                    <button id="prev-btn" disabled>&lt;</button>
+                    <button id="next-btn" disabled>&gt;</button>
                 </div>
 
                 <div class="controls-group">
@@ -165,12 +175,16 @@
             </div>
             <div class="controls-section">
                 <div class="controls-group">
-                    Ocultos
+                    🗑️
+                    <input type="checkbox" id="auto-delete-btn">
+                </div>
+                <div class="controls-group">
+                    🛠️
                     <input type="checkbox" id="fix-btn">
                 </div>
                 <div class="controls-group">
-                    <button id="send-btn">Arreglar</button>
-                    <button id="delete-btn">Eliminar</button>
+                    <button id="send-btn">🛠️</button>
+                    <button id="delete-btn">🗑️</button>
                 </div>
             </div>
 
@@ -189,6 +203,7 @@
             const JS_KEY = 'QmI5XDehxfxD9j118mZGH30PO16iXvjgJLAxOgny'; // Reemplaza esto
             const SERVER_URL = 'https://parseapi.back4app.com'; // Reemplaza esto con tu URL base
             const LS_FIX_KEY = 'fix';
+            const LS_AUTODELETE_KEY = 'autoDelete';
 
             Parse.initialize(APP_ID, JS_KEY);
             Parse.serverURL = SERVER_URL;
@@ -202,6 +217,7 @@
             const limit = 1; // Solo mostramos 1 registro por "página"
             let currentObject = null;
             const fix = localStorage.getItem(LS_FIX_KEY);
+            const autoDelete = localStorage.getItem(LS_AUTODELETE_KEY);
 
 
             // --- 2. MANEJO DE ELEMENTOS DEL DOM ---
@@ -216,8 +232,10 @@
             const deleteBtn = document.getElementById('delete-btn');
             const sendBtn = document.getElementById('send-btn');
             const fixBtn = document.getElementById('fix-btn');
+            const autoDeleteBtn = document.getElementById('auto-delete-btn');
 
-            fixBtn.checked = fix && fix === 'true'
+            fixBtn.checked = fix && fix === 'true';
+            autoDeleteBtn.checked = autoDelete && autoDelete === 'true';
             // --- 3. FUNCIONES DE CONSULTA ---
 
             /**
@@ -245,7 +263,6 @@
                         .replace(/JSON/g, '')
                         .replace(/\n```/g, '')
                         .replace(/\s+/g, '')
-                        .replace(/^0+/g, '')
                         .trim();
                     for (let i = 1; i < 10; i++) {
                         cleanedString = cleanedString.replace(new RegExp(`0${i}`, 'g'), i)
@@ -259,9 +276,19 @@
                         const m2b = cleanedString.match(/\[\[[0-9,\[\]\s]*\]\]/g);
                         if (m2b) last = `[${m2b.at(-1)}]`;
                     }
-                    return JSON.parse(last);
+                    let obj = JSON.parse(last);
+                    if (obj.length === 1 && obj[0].length > 5 && obj[0].length % 5 === 0) {
+                        const divided = obj[0].reduce((acc, _, i) => {
+                            if (i % 5 === 0) {
+                                acc.push(obj[0].slice(i, i + 5));
+                            }
+                            return acc;
+                        }, []);
+                        obj = divided;
+                    }
+                    return obj;
                 } catch (e) {
-                    console.error("Error parsing JSON string:");
+                    console.error("Error: ", e.message);
                     console.log(md)
                     return null;
                 }
@@ -308,7 +335,7 @@
                     const query = new Parse.Query(CardsScan);
                     query.limit(limit);
                     query.skip(skip);
-                    query.equalTo('fix', fix && fix === 'true'?  true : undefined)
+                    query.equalTo('fix', fix && fix === 'true' ? true : undefined)
                     // Opcional: ordenar por fecha de creación o un campo específico
                     query.ascending("createdAt");
                     const results = await query.find();
@@ -321,7 +348,7 @@
                         const resultText = currentObject.get('result') || 'No se encontró campo **result**';
                         const serverText = currentObject.get('server') || 'No se encontró campo **server**';
                         const obj = md2json(resultText);
-
+                        const validated = obj ? validateCards(obj) : false
 
                         // Actualizar DOM
                         if (imageUrl) {
@@ -335,7 +362,7 @@
                         }
 
                         // Añade el campo server al contenido de texto para enriquecer la info
-                        textContent.innerHTML = `<strong>Proveedor:</strong> ${serverText}<br><br><strong>Valido:</strong>${obj ? validateCards(obj) : false}<br><br><strong>Contenido:</strong><br>${resultText}<br><br><strong>Resultado:</strong>${JSON.stringify(obj)}
+                        textContent.innerHTML = `<strong>Proveedor:</strong> ${serverText}<br><br><strong>Valido:</strong>${validated}<br><br><strong>Contenido:</strong><br>${resultText}<br><br><strong>Resultado:</strong>${JSON.stringify(obj)}
                         `;
 
                         // Actualizar estado de la página
@@ -343,6 +370,9 @@
                         pageInput.value = page;
                         updateButtonState();
 
+                        if(validated && autoDelete) {
+                            deleteBtn.click();
+                        }
                     } else {
                         // Esto no debería pasar si el total es correcto, pero es un resguardo
                         textContent.textContent = `No ese encontraron registros en la página ${page}.`;
@@ -373,7 +403,7 @@
 
                 const url = `https://bingoplayer.up.railway.app/analytic?id=${publicId}`;
 
-                fetch(url, {
+                await fetch(url, {
                     method: 'DELETE'
                 })
                     .then(response => response.json())
@@ -423,6 +453,8 @@
 
             deleteBtn.addEventListener('click', async () => {
                 if (currentObject) {
+                    deleteBtn.textContent = "..."
+                    deleteBtn.disabled = true;
                     await deleteImage(currentObject.get('image'))
                     await currentObject.destroy();
                     location.reload();
@@ -437,8 +469,14 @@
                 }
             })
 
-            fixBtn.addEventListener('change', async (event)=> {
+            fixBtn.addEventListener('change', async (event) => {
                 localStorage.setItem(LS_FIX_KEY, event.currentTarget.checked);
+                location.reload();
+            })
+
+            autoDeleteBtn.addEventListener('change', async (event) => {
+                console.log("changed")
+                localStorage.setItem(LS_AUTODELETE_KEY, event.currentTarget.checked);
                 location.reload();
             })
 
