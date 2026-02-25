@@ -244,7 +244,7 @@
             async function fetchTotalCount() {
                 try {
                     const query = new Parse.Query(CardsScan);
-                    query.equalTo('fix', fix && fix === 'true' ? true : undefined)
+                    query.equalTo('fix', fix && fix === 'true' ? true : false)
                     totalObjects = await query.count();
                     pageInfo.textContent = `de ${totalObjects}`;
                     pageInput.max = totalObjects;
@@ -335,7 +335,7 @@
                     const query = new Parse.Query(CardsScan);
                     query.limit(limit);
                     query.skip(skip);
-                    query.equalTo('fix', fix && fix === 'true' ? true : undefined)
+                    query.equalTo('fix', fix && fix === 'true' ? true : false)
                     // Opcional: ordenar por fecha de creación o un campo específico
                     query.ascending("createdAt");
                     const results = await query.find();
